@@ -88,13 +88,21 @@ class ShearTest(BaseValidationTest):
         return n2
 
 
-    def theory_corr(self, n_z2, xvals, lmax2, chi_max, zlo2, zhi2):
+    def theory_corr(self, n_z2, xvals, lmax2, chi_max, zlo2, zhi2, cosmo_cat):
         '''compute the correlation function from limber integration over the CAMB power spectrum'''
         nz_int = self.compute_nz(n_z2)
         z_vals = np.linspace(zlo2,zhi2,1000)
         n_vals = nz_int(z_vals)
 
-        cosmo_ccl = ccl.Cosmology(Omega_c=0.22, Omega_b=0.045, h=0.71, A_s=2.168e-9, n_s=0.96)
+
+        ns = getattr(cosmo_cat, 'n_s', 0.963)
+        s8 = getattr(cosmo_cat, 'sigma8', 0.8)
+
+        Omega_c = (cosmo_cat.Om0 - cosmo_cat.Ob0)
+        Omega_b = cosmo_cat.Ob0
+        h = cosmo_cat.H0.value/100.
+        cosmo_ccl = ccl.Cosmology(Omega_c=Omega_c, Omega_b=Omega_b, h=h, A_s = 2.168e-9*(s8/0.8)**2, n_s = ns)
+                
         ll = np.arange(0, 15000)
         lens1 = ccl.WeakLensingTracer(cosmo_ccl, dndz=(z_vals, n_vals))
         pp = ccl.angular_cl(cosmo_ccl, lens1, lens1, ll)
@@ -307,9 +315,10 @@ class ShearTest(BaseValidationTest):
                     sigm_jack[i] = np.sqrt(gg.varxip[i])*1.e6
 
             n_z = catalog_data[self.z][mask]
+            cosmo_cat = getattr(catalog_instance, 'cosmology', WMAP7)
 
 
-            xvals, theory_plus, theory_minus = self.theory_corr(n_z, r, 15000, chi_max,zlo2,zhi2)
+            xvals, theory_plus, theory_minus = self.theory_corr(n_z, r, 15000, chi_max,zlo2,zhi2, cosmo_cat)
 
             theory_plus = theory_plus * 1.e6
             theory_minus = theory_minus * 1.e6
