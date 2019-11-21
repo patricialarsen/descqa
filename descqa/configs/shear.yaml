@@ -12,7 +12,7 @@ sep_units: 'arcmin'
 bin_slop: 0.07
 zlo: 0.5
 zhi: 3.0
-ntomo: 3
+ntomo: 1
 z_range: 0.05
 do_jackknife: False
 N_clust: 2
